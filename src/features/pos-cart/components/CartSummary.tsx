@@ -1,5 +1,6 @@
-import { CreditCard, Gift, Printer, Tag } from 'lucide-react'
+import { CreditCard, Tag, ReceiptText } from 'lucide-react'
 import { useTheme } from '@/providers/ThemeProvider'
+import { Box, Typography, Button, Divider } from '@mui/material'
 
 interface CartSummaryProps {
   subtotal: number
@@ -8,61 +9,117 @@ interface CartSummaryProps {
   onCheckout: () => void
 }
 
-// ─── CartSummary ──────────────────────────────────────────────────────────────
+// ─── CartSummary (Fiori Edition) ─────────────────────────────────────────────
 export function CartSummary({ subtotal, tax, total, onCheckout }: CartSummaryProps) {
   const { isDark } = useTheme()
 
-  const border = isDark ? 'border-[#2a2a2a]' : 'border-gray-200'
-  const surface = isDark ? 'bg-[#1a1a1a]' : 'bg-white'
-  const textMuted = isDark ? 'text-gray-400' : 'text-gray-500'
-  const btnSecondary = isDark
-    ? 'bg-[#1f1f1f] text-gray-300 hover:bg-[#2a2a2a]'
-    : 'bg-white text-gray-700 hover:bg-gray-50'
-  const btnAlt = isDark
-    ? 'bg-[#1f1f1f] text-gray-300 hover:bg-[#2a2a2a]'
-    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+  const sapBlue = '#005483'
+  const sapBorder = isDark ? '#2a2a2a' : '#d9d9d9'
+  const sapTextPrimary = isDark ? '#f3f4f6' : '#32363a'
+  const sapTextMuted = isDark ? '#a0aec0' : '#6a6d70'
+  const surface = isDark ? '#1a1a1a' : '#ffffff'
 
-  const fmt = (n: number) => n.toLocaleString(undefined, { minimumFractionDigits: 2 })
+  const fmt = (n: number) => n.toLocaleString('es-ES', { 
+    style: 'currency', 
+    currency: 'EUR' 
+  })
 
   return (
-    <div
-      className={`border-t ${border} ${surface} p-6 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] transition-colors duration-200`}
+    <Box
+      sx={{
+        borderTop: `2px solid ${sapBorder}`,
+        bgcolor: surface,
+        p: 3,
+        mt: 'auto', // Asegura el anclaje al fondo en flex containers
+        transition: 'all 0.2s',
+        boxShadow: isDark ? '0 -4px 10px rgba(0,0,0,0.3)' : '0 -4px 10px rgba(0,0,0,0.03)',
+      }}
     >
-      <div className="mb-6 space-y-2">
-        <div className={`flex justify-between text-[11px] font-bold ${textMuted}`}>
-          <span>Subtotal</span>
-          <span>${fmt(subtotal)}</span>
-        </div>
-        <div className={`flex justify-between text-[11px] font-bold ${textMuted}`}>
-          <span>Tax (8.5%)</span>
-          <span>${fmt(tax)}</span>
-        </div>
-        <div className={`flex items-center justify-between border-t ${border} pt-2`}>
-          <span className={`text-xs font-bold uppercase tracking-widest ${textMuted}`}>
-            Total
-          </span>
-          <span className="text-2xl font-black text-[#005eb2]">${fmt(total)}</span>
-        </div>
-      </div>
+      {/* Subtotales e Impuestos */}
+      <Box sx={{ mb: 2.5 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+          <Typography sx={{ fontSize: '11px', fontWeight: 800, color: sapTextMuted, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            Subtotal Bruto
+          </Typography>
+          <Typography sx={{ fontSize: '12px', fontWeight: 900, color: sapTextPrimary }}>
+            {fmt(subtotal)}
+          </Typography>
+        </Box>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+          <Typography sx={{ fontSize: '11px', fontWeight: 800, color: sapTextMuted, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            IVA Estimado (15%)
+          </Typography>
+          <Typography sx={{ fontSize: '12px', fontWeight: 900, color: sapTextPrimary }}>
+            {fmt(tax)}
+          </Typography>
+        </Box>
+        
+        <Divider sx={{ my: 1.5, borderColor: sapBorder }} />
+        
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <ReceiptText size={16} color={sapBlue} strokeWidth={2.5} />
+            <Typography sx={{ fontSize: '13px', fontWeight: 900, color: sapBlue, textTransform: 'uppercase', letterSpacing: '1px' }}>
+              Total Neto
+            </Typography>
+          </Box>
+          <Typography sx={{ fontSize: '24px', fontBlack: 900, fontWeight: 900, color: sapBlue, tracking: '-1px' }}>
+            {fmt(total)}
+          </Typography>
+        </Box>
+      </Box>
 
-      <div className="flex flex-col gap-2">
-        <button
-          onClick={onCheckout}
+      {/* Botones de Acción SAP Style */}
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+        <Button
+          variant="contained"
+          fullWidth
           disabled={total <= 0}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-linear-to-br from-[#005eb2] to-[#003f7b] py-4 font-bold text-white shadow-lg shadow-blue-900/30 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
+          onClick={onCheckout}
+          startIcon={<CreditCard size={18} strokeWidth={2.5} />}
+          sx={{
+            bgcolor: sapBlue,
+            color: 'white',
+            py: 1.5,
+            borderRadius: '4px',
+            fontSize: '13px',
+            fontWeight: 900,
+            textTransform: 'uppercase',
+            boxShadow: 'none',
+            '&:hover': {
+              bgcolor: '#003f63',
+              boxShadow: '0 4px 8px rgba(0,84,131,0.3)',
+            },
+            '&.Mui-disabled': {
+              bgcolor: isDark ? '#2a2a2a' : '#f0f0f0',
+              opacity: 0.5
+            }
+          }}
         >
-          <CreditCard className="h-5 w-5" />
-          Complete Payment
-        </button>
-        <button
-          className={`flex w-full items-center justify-center gap-1.5 rounded-xl border ${border} ${btnSecondary} py-2.5 text-xs font-bold transition-colors`}
+          Finalizar y Cobrar
+        </Button>
+        
+        <Button
+          variant="outlined"
+          fullWidth
+          startIcon={<Tag size={16} />}
+          sx={{
+            borderColor: sapBorder,
+            color: sapTextPrimary,
+            py: 1,
+            borderRadius: '4px',
+            fontSize: '11px',
+            fontWeight: 800,
+            textTransform: 'uppercase',
+            '&:hover': {
+              borderColor: sapBlue,
+              bgcolor: isDark ? '#222' : '#f8f9fa',
+            }
+          }}
         >
-          <Tag className="h-4 w-4" />
-          Add Discount
-        </button>
-
-      </div>
-    </div>
+          Descuento Global
+        </Button>
+      </Box>
+    </Box>
   )
 }
-

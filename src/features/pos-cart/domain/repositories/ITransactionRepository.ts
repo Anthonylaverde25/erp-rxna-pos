@@ -12,4 +12,5 @@ export interface CheckoutItem {
   item_id: number;
   quantity: number;
   unit_price: number;
+  discount_percent: number;
 }

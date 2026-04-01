@@ -22,7 +22,8 @@ interface PosPaymentModalProps {
   open: boolean
   onClose: () => void
   total: number
-  onConfirm: () => void
+  isProcessing?: boolean
+  onConfirm: (paymentData: { methodId: number, methodName: string, tenderedAmount: number, change: number }) => void
 }
 
 // Simulated payment methods — replace with real API hook when backend is integrated
@@ -40,7 +41,7 @@ const NUMPAD_KEYS = ['7', '8', '9', '4', '5', '6', '1', '2', '3', '.', '0', 'DEL
 
 // ─── PosPaymentModal ──────────────────────────────────────────────────────────
 // POS payment modal: MUI Select for payment method, numpad for cash, change calc.
-export function PosPaymentModal({ open, onClose, total, onConfirm }: PosPaymentModalProps) {
+export function PosPaymentModal({ open, onClose, total, isProcessing, onConfirm }: PosPaymentModalProps) {
   const { isDark } = useTheme()
   const [methodId, setMethodId] = useState<number>(1)
   const [inputDisplay, setInputDisplay] = useState<string>('')
@@ -87,9 +88,18 @@ export function PosPaymentModal({ open, onClose, total, onConfirm }: PosPaymentM
 
   const handleConfirm = () => {
     if (!canConfirm) return
+    
+    // Pass payment info to parent
+    onConfirm({
+      methodId,
+      methodName: selectedMethod?.name || 'Varios',
+      tenderedAmount,
+      change,
+    })
+    
+    // Note: We don't reset state here anymore immediately because the layout handles closing
     setInputDisplay('')
     setMethodId(1)
-    onConfirm()
   }
 
   const fmt = (n: number) =>
@@ -365,6 +375,7 @@ export function PosPaymentModal({ open, onClose, total, onConfirm }: PosPaymentM
       <DialogActions sx={{ px: 3, py: 2, bgcolor: footerBg, borderTop: `1px solid ${borderColor}`, gap: 2 }}>
         <Button
           onClick={handleClose}
+          disabled={isProcessing}
           sx={{ color: textMuted, fontWeight: 700, textTransform: 'none', fontSize: '0.9rem', borderRadius: '4px' }}
         >
           Cancelar
@@ -372,7 +383,7 @@ export function PosPaymentModal({ open, onClose, total, onConfirm }: PosPaymentM
         <Button
           variant="contained"
           onClick={handleConfirm}
-          disabled={!canConfirm}
+          disabled={!canConfirm || isProcessing}
           startIcon={<CheckCircle2 size={18} />}
           sx={{
             bgcolor: '#005483',
@@ -387,11 +398,13 @@ export function PosPaymentModal({ open, onClose, total, onConfirm }: PosPaymentM
             '&.Mui-disabled': { bgcolor: isDark ? '#374151' : '#94a3b8', color: 'rgba(255,255,255,0.5)' },
           }}
         >
-          {canConfirm
-            ? 'Confirmar Cobro'
-            : isCash
-              ? `Faltan ${fmt(total - tenderedAmount)}`
-              : 'Seleccione método'}
+          {isProcessing
+            ? 'Procesando...'
+            : canConfirm
+              ? 'Confirmar Cobro'
+              : isCash
+                ? `Faltan ${fmt(total - tenderedAmount)}`
+                : 'Seleccione método'}
         </Button>
       </DialogActions>
     </Dialog>

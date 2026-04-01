@@ -6,16 +6,16 @@ import type { ITransactionRepository, CheckoutPayload } from '../domain/reposito
 
 // ─── useCart Hook (POS Edition) ──────────────────────────────────────────────
 export function useCart(initialItems: CartItem[] = []) {
-  const [cart, setCart] = useState<CartItem[]>(initialItems)
+  const [cart, setCart] = useState<CartItem[]>(initialItems.map(i => ({ ...i, discountPercent: i.discountPercent || 0 })))
   const [isProcessing, setIsProcessing] = useState(false)
 
-  const addToCart = useCallback((item: Omit<CartItem, 'quantity'>) => {
+  const addToCart = useCallback((item: Omit<CartItem, 'quantity' | 'discountPercent'>) => {
     setCart((prev) => {
       const existing = prev.find((i) => i.id === item.id)
       if (existing) {
         return prev.map((i) => (i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i))
       }
-      return [...prev, { ...item, quantity: 1 }]
+      return [...prev, { ...item, quantity: 1, discountPercent: 0 }]
     })
   }, [])
 
@@ -27,13 +27,24 @@ export function useCart(initialItems: CartItem[] = []) {
     )
   }, [])
 
+  const updateDiscount = useCallback((id: string, percent: number) => {
+    setCart((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, discountPercent: Math.min(100, Math.max(0, percent)) } : item))
+    )
+  }, [])
+
   const clearCart = useCallback(() => setCart([]), [])
 
-  const subtotal = useMemo(() => cart.reduce((sum, i) => sum + i.price * i.quantity, 0), [cart])
+  // Cálculos dinámicos con descuento
+  const subtotal = useMemo(() => 
+    cart.reduce((sum, i) => {
+      const lineTotal = (i.price * i.quantity) * (1 - (i.discountPercent || 0) / 100);
+      return sum + lineTotal;
+    }, 0), [cart])
+
   const tax = useMemo(() => subtotal * 0.15, [subtotal]) 
   const total = useMemo(() => subtotal + tax, [subtotal, tax])
 
-  // Checkout Action: Envia el carrito al servidor para generar el Ticket (TKT)
   const checkout = useCallback(async (paymentMethodId: number = 1) => {
     if (cart.length === 0) return null
 
@@ -45,14 +56,14 @@ export function useCart(initialItems: CartItem[] = []) {
         items: cart.map(item => ({
           item_id: parseInt(item.id),
           quantity: item.quantity,
-          unit_price: item.price
+          unit_price: item.price,
+          discount_percent: item.discountPercent || 0
         })),
         payment_method_id: paymentMethodId,
         notes: 'Venta desde Terminal POS'
       }
 
       const result = await repository.checkout(payload)
-      
       clearCart()
       return result
     } catch (error) {
@@ -67,6 +78,7 @@ export function useCart(initialItems: CartItem[] = []) {
     cart,
     addToCart,
     updateQuantity,
+    updateDiscount,
     clearCart,
     checkout,
     isProcessing,
