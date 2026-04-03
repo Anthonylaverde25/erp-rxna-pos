@@ -1,6 +1,7 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { posAxios } from '@/infrastructure/http/posAxios';
 import { useAuthStore } from './store/useAuthStore';
+import { useNavigate } from 'react-router-dom';
 
 interface PosBootstrapProps {
   children: React.ReactNode;
@@ -10,6 +11,39 @@ export function PosBootstrap({ children }: PosBootstrapProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const authAttempted = useRef(false);
+  const navigate = useNavigate();
+
+  const handleSignOut = useCallback(async () => {
+    try {
+      await posAxios.post('/auth/logout');
+    } catch (e) {
+      console.error('Error invalidating POS session', e);
+    } finally {
+      useAuthStore.getState().clearSession();
+      window.localStorage.removeItem('pos_jwt_access_token');
+      window.localStorage.removeItem('pos_tenant_url');
+      navigate('/login', { replace: true });
+    }
+  }, [navigate]);
+
+  useEffect(() => {
+    // Derive the ERP origin from the stored tenant URL (set during SSO launch)
+    const storedTenantUrl = window.localStorage.getItem('pos_tenant_url');
+    const erpOrigin = storedTenantUrl
+      ? new URL(storedTenantUrl).origin
+      : (window.location.hostname === 'localhost' ? 'http://localhost:3000' : `https://app.${window.location.hostname.replace('pos.', '')}`);
+
+    const handleMessage = (event: MessageEvent) => {
+      // Security: only accept messages from the known ERP origin
+      if (event.origin !== erpOrigin) return;
+      if (event.data?.type === 'LOGOUT_EVENT') {
+        handleSignOut();
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [handleSignOut]);
 
   useEffect(() => {
     if (authAttempted.current) return;
@@ -71,8 +105,8 @@ export function PosBootstrap({ children }: PosBootstrapProps) {
         }
 
         // Si llegamos a este punto y no hay un token guardado ni un lt provisto,
-        // no se puede inicializar el POS correctamente.
-        setError('Acceso denegado. Por favor, abre el Punto de Venta desde el ERP administrativo.');
+        // habilitamos el login directo redirigiendo a la pantalla de login
+        navigate('/login', { replace: true });
         setIsLoading(false);
 
       } catch (err: any) {
