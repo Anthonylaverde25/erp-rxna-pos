@@ -1,16 +1,19 @@
-import { Bell, Moon, Search, Settings, Sun, Store, User, LogOut } from 'lucide-react'
-import { IconButton, Tooltip, Avatar, Divider, Box, Typography } from '@mui/material'
+import { Bell, Moon, Search, Settings, Sun, Store } from 'lucide-react'
+import { IconButton, Tooltip, Avatar, Divider, Box } from '@mui/material'
 import { useTheme } from '@/providers/ThemeProvider'
-import { useAuthStore } from '../features/pos-auth/store/useAuthStore'
+import { useAuthStore } from '@/features/pos-auth/store/useAuthStore'
+import { DocumentSeriesSwitch } from './DocumentSeriesSwitch'
+import { Link as RouterLink, useLocation } from 'react-router-dom'
 
 // ─── PosHeader (Fiori Edition) ───────────────────────────────────────────────
 export function PosHeader() {
   const { isDark, toggleTheme } = useTheme()
   const user = useAuthStore((state) => state.user)
+  const location = useLocation()
+  const isSettingsRoute = location.pathname === '/setting'
 
   // SAP Fiori Horizon Palette
   const sapBlue = '#005483'
-  const sapBackground = isDark ? '#1a1a1a' : '#ffffff'
   const sapBorder = isDark ? '#2a2a2a' : '#d9d9d9'
   const sapTextPrimary = isDark ? '#f3f4f6' : '#32363a'
   const sapTextMuted = isDark ? '#a0aec0' : '#6a6d70'
@@ -42,6 +45,10 @@ export function PosHeader() {
             <span className={`text-xs font-black ${sapTextPrimary}`}>T-102 (Main Floor)</span>
           </div>
         </div>
+
+        <Divider orientation="vertical" flexItem sx={{ my: 1.5, borderColor: sapBorder }} />
+
+        <DocumentSeriesSwitch />
       </div>
 
       {/* Center: Search (Industrial Style) */}
@@ -72,6 +79,24 @@ export function PosHeader() {
         <Tooltip title="Switch Theme">
           <IconButton onClick={toggleTheme} size="small" sx={{ color: sapTextMuted, borderRadius: '4px' }}>
             {isDark ? <Sun size={18} /> : <Moon size={18} />}
+          </IconButton>
+        </Tooltip>
+
+        <Tooltip title="Configuracion">
+          <IconButton
+            component={RouterLink}
+            to="/setting"
+            size="small"
+            sx={{
+              color: isSettingsRoute ? '#005483' : sapTextMuted,
+              borderRadius: '4px',
+              bgcolor: isSettingsRoute ? (isDark ? 'rgba(0,84,131,0.22)' : '#e6f0f7') : 'transparent',
+              '&:hover': {
+                bgcolor: isSettingsRoute ? (isDark ? 'rgba(0,84,131,0.28)' : '#d9ebf5') : isDark ? '#222' : '#f8f9fa',
+              },
+            }}
+          >
+            <Settings size={18} />
           </IconButton>
         </Tooltip>
 

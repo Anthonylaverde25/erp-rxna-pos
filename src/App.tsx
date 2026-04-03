@@ -4,6 +4,8 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { PosLayout } from '@/layout/PosLayout'
 import { PosBootstrap } from '@/features/pos-auth/PosBootstrap'
 import { LoginView } from '@/features/pos-auth/views/LoginView'
+import { PosSalesView } from '@/features/pos-shell/views/PosSalesView'
+import { PosSettingsView } from '@/features/pos-settings/views/PosSettingsView'
 
 // ─── App ──────────────────────────────────────────────────────────────────────
 // Entry point — only providers + root layout.
@@ -25,7 +27,10 @@ export default function App() {
                   <PosLayout />
                 </PosBootstrap>
               }
-            />
+            >
+              <Route index element={<PosSalesView />} />
+              <Route path="setting" element={<PosSettingsView />} />
+            </Route>
           </Routes>
         </BrowserRouter>
       </ThemeProvider>
