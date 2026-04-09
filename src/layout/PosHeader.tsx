@@ -2,7 +2,7 @@ import { Bell, Moon, Search, Settings, Sun, Store } from 'lucide-react'
 import { IconButton, Tooltip, Avatar, Divider, Box } from '@mui/material'
 import { useTheme } from '@/providers/ThemeProvider'
 import { useAuthStore } from '@/features/pos-auth/store/useAuthStore'
-import { DocumentSeriesSwitch } from './DocumentSeriesSwitch'
+import { DocumentSeriesSwitch } from '@/features/pos-settings/components/DocumentSeriesSwitch'
 import { Link as RouterLink, useLocation } from 'react-router-dom'
 
 // ─── PosHeader (Fiori Edition) ───────────────────────────────────────────────

@@ -6,6 +6,8 @@ export interface CheckoutPayload {
   items: CheckoutItem[];
   payment_method_id: number;
   notes?: string;
+  number_series_id?: number;
+  document_type_code?: string;
 }
 
 export interface CheckoutItem {

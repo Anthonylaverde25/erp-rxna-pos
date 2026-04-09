@@ -14,4 +14,7 @@ export const TYPES = {
   
   // POS Cart / Transactions
   ITransactionRepository: Symbol.for('ITransactionRepository'),
+
+  // Number Series
+  INumberSeriesRepository: Symbol.for('INumberSeriesRepository'),
 }

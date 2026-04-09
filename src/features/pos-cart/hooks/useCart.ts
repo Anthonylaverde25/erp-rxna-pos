@@ -2,6 +2,7 @@ import { useState, useCallback, useMemo } from 'react'
 import type { CartItem } from '@/types/pos.types'
 import { container } from '@/di/container'
 import { TYPES } from '@/di/types'
+import { usePosSettingsStore } from '@/features/pos-settings/store/usePosSettingsStore'
 import type { ITransactionRepository, CheckoutPayload } from '../domain/repositories/ITransactionRepository'
 
 // ─── useCart Hook (POS Edition) ──────────────────────────────────────────────
@@ -52,6 +53,8 @@ export function useCart(initialItems: CartItem[] = []) {
     try {
       const repository = container.get<ITransactionRepository>(TYPES.ITransactionRepository)
       
+      const activeSeries = usePosSettingsStore.getState().activeSeries
+
       const payload: CheckoutPayload = {
         items: cart.map(item => ({
           item_id: parseInt(item.id),
@@ -60,7 +63,9 @@ export function useCart(initialItems: CartItem[] = []) {
           discount_percent: item.discountPercent || 0
         })),
         payment_method_id: paymentMethodId,
-        notes: 'Venta desde Terminal POS'
+        notes: 'Venta desde Terminal POS',
+        number_series_id: activeSeries?.databaseId,
+        document_type_code: activeSeries?.documentTypeCode || 'TKT'
       }
 
       const result = await repository.checkout(payload)
