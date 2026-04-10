@@ -14,6 +14,13 @@ export interface DocumentLineEntity {
   lineTotal: number;
 }
 
+export interface PosPartnerSnapshot {
+  name: string;
+  vat_number?: string | null;
+  cif?: string | null;
+  email?: string | null;
+}
+
 export class PosDocumentEntity {
   constructor(
     public readonly id: number,
@@ -26,6 +33,7 @@ export class PosDocumentEntity {
     public readonly taxTotal: number,
     public readonly total: number,
     public readonly lines: DocumentLineEntity[],
+    public readonly partner?: PosPartnerSnapshot,
   ) {
     // 🛡️ Ejecutar validaciones centralizadas antes de la asignación técnica
     PosDocumentValidator.validate({
@@ -35,8 +43,19 @@ export class PosDocumentEntity {
     });
   }
 
+  /**
+   * Genera una respuesta estructurada para la impresión del ticket
+   */
+  public getPrintablePartner(): { name: string; identification: string } | null {
+    if (!this.partner) return null;
 
-
+    const id = this.partner.cif || this.partner.vat_number || '';
+    
+    return {
+      name: this.partner.name,
+      identification: id,
+    };
+  }
 
   /**
    * Helper para determinar si el documento es oficialmente un Ticket

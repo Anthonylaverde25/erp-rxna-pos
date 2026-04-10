@@ -30,7 +30,13 @@ export class DocumentMapper {
       Number(data.subtotal) || 0,
       Number(data.tax_total) || 0,
       Number(data.total) || 0,
-      lines
+      lines,
+      data.partner_snapshot || data.partner ? {
+        name: data.partner_snapshot?.name || data.partner?.name,
+        vat_number: data.partner_snapshot?.vat_number || data.partner?.vat_number,
+        cif: data.partner_snapshot?.cif || data.partner?.cif,
+        email: data.partner_snapshot?.email || data.partner?.email
+      } : undefined
     );
   }
 }

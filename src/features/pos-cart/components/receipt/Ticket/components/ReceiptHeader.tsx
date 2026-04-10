@@ -7,9 +7,10 @@ interface ReceiptHeaderProps {
   ticketNumber: string;
   date: string;
   userName?: string;
+  partnerInfo?: { name: string; identification: string } | null;
 }
 
-export function ReceiptHeader({ company, ticketNumber, date, userName }: ReceiptHeaderProps) {
+export function ReceiptHeader({ company, ticketNumber, date, userName, partnerInfo }: ReceiptHeaderProps) {
   return (
     <Box sx={{ textAlign: 'center', mb: 3 }}>
       <Typography sx={receiptStyles.headerTitle}>
@@ -42,6 +43,22 @@ export function ReceiptHeader({ company, ticketNumber, date, userName }: Receipt
         <Typography sx={receiptStyles.textExtraSmall}>
           Atendido por: {userName}
         </Typography>
+      )}
+
+      {partnerInfo && (
+        <Box sx={{ mt: 1.5, p: 1, border: '1px solid #e2e8f0', backgroundColor: '#f8fafc' }}>
+          <Typography sx={{ fontSize: '0.65rem', fontWeight: 900, textTransform: 'uppercase', color: '#64748b', mb: 0.5 }}>
+            Datos del Cliente
+          </Typography>
+          <Typography sx={{ fontSize: '0.75rem', fontWeight: 800 }}>
+            {partnerInfo.name}
+          </Typography>
+          {partnerInfo.identification && (
+            <Typography sx={{ fontSize: '0.7rem' }}>
+              ID: {partnerInfo.identification}
+            </Typography>
+          )}
+        </Box>
       )}
     </Box>
   );

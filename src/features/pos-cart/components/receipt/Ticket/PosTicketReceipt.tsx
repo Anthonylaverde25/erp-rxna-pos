@@ -13,7 +13,7 @@ import type { PaymentInfo, CompanyInfo } from './types';
 import type { PosDocumentEntity } from '@/domain/entities/documents/PosDocumentEntity';
 
 interface PosTicketReceiptProps {
-  ticketData: PosDocumentEntity; 
+  ticketData: PosDocumentEntity;
   paymentInfo: PaymentInfo;
   onClose: () => void;
 }
@@ -74,6 +74,7 @@ export function PosTicketReceipt({ ticketData, paymentInfo, onClose }: PosTicket
           ticketNumber={ticketData.numberSerie}
           date={ticketData.issueDate}
           userName={user?.full_name}
+          partnerInfo={ticketData.getPrintablePartner()}
         />
 
         <ReceiptLines lines={ticketData.lines} />
