@@ -28,6 +28,8 @@ export function PosSalesView() {
     total,
     checkout,
     isProcessing,
+    selectedPartner,
+    setPartner
   } = useCart([])
 
   const [paymentOpen, setPaymentOpen] = useState(false)
@@ -94,6 +96,9 @@ export function PosSalesView() {
               onUpdateDiscount={updateDiscount}
               onClearCart={clearCart}
               onCheckout={() => setPaymentOpen(true)}
+              selectedPartner={selectedPartner}
+              onSelectPartner={setPartner}
+              onRemovePartner={() => setPartner(null)}
             />
           </div>
 

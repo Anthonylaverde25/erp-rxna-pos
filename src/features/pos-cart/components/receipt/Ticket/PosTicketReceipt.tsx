@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import { Box, Paper } from '@mui/material';
 import { useTheme } from '@/providers/ThemeProvider';
 import { useAuthStore } from '@/features/pos-auth/store/useAuthStore';
@@ -6,11 +7,13 @@ import { ReceiptLines } from './components/ReceiptLines';
 import { ReceiptTotals } from './components/ReceiptTotals';
 import { ReceiptFooter } from './components/ReceiptFooter';
 import { ReceiptActions } from './components/ReceiptActions';
+import { ConvertToInvoiceModal } from './components/ConvertToInvoiceModal';
 import { receiptStyles } from './styles';
-import type { PaymentInfo, ReceiptData, CompanyInfo } from './types';
+import type { PaymentInfo, CompanyInfo } from './types';
+import type { PosDocumentEntity } from '@/domain/entities/documents/PosDocumentEntity';
 
 interface PosTicketReceiptProps {
-  ticketData: any; // Response from checkout API
+  ticketData: PosDocumentEntity; 
   paymentInfo: PaymentInfo;
   onClose: () => void;
 }
@@ -22,10 +25,10 @@ interface PosTicketReceiptProps {
 export function PosTicketReceipt({ ticketData, paymentInfo, onClose }: PosTicketReceiptProps) {
   const { isDark } = useTheme();
   const user = useAuthStore((state) => state.user);
+  const [isConvertModalOpen, setIsConvertModalOpen] = useState(false);
 
   // Extract context data
   const activeCompany = user?.companies.find(c => c.id === user.active_company_id);
-  const data = ticketData?.data || {};
 
   const companyInfo: CompanyInfo = {
     name: activeCompany?.name || 'NEXUS ERP SYSTEM',
@@ -34,23 +37,17 @@ export function PosTicketReceipt({ ticketData, paymentInfo, onClose }: PosTicket
     address: 'Calle Industrial 42, 28001 Madrid'
   };
 
-  const receiptData: ReceiptData = {
-    id: data.id,
-    number_serie: data.number_serie || 'TKT-PENDING',
-    issue_date: data.issue_date || new Date().toLocaleDateString(),
-    subtotal: data.subtotal || 0,
-    tax_total: data.tax_total || 0,
-    total: data.total || 0,
-    lines: data.lines || []
-  };
-
   const handlePrint = () => {
     window.print();
   };
 
   const handleConvertToInvoice = () => {
-    console.log('Convert to Invoice triggered for ticket:', receiptData.id);
-    // Future logic: Trigger conversion modal or API call
+    setIsConvertModalOpen(true);
+  };
+
+  const handleConversionSuccess = (newInvoice: any) => {
+    console.log('Document converted successfully:', newInvoice);
+    // Future: Maybe show a "Success" snackbar or redirect to the nuevo documento
   };
 
   // JARVIS Styles (Industrial Technical)
@@ -74,23 +71,32 @@ export function PosTicketReceipt({ ticketData, paymentInfo, onClose }: PosTicket
 
         <ReceiptHeader
           company={companyInfo}
-          ticketNumber={receiptData.number_serie}
-          date={receiptData.issue_date}
+          ticketNumber={ticketData.numberSerie}
+          date={ticketData.issueDate}
           userName={user?.full_name}
         />
 
-        <ReceiptLines lines={receiptData.lines} />
+        <ReceiptLines lines={ticketData.lines} />
 
         <ReceiptTotals
-          subtotal={receiptData.subtotal}
-          taxTotal={receiptData.tax_total}
-          total={receiptData.total}
+          subtotal={ticketData.subtotal}
+          taxTotal={ticketData.taxTotal}
+          total={ticketData.total}
           paymentInfo={paymentInfo}
         />
 
-        <ReceiptFooter ticketId={receiptData.id} />
+        <ReceiptFooter ticketId={ticketData.id} />
 
       </Paper>
+
+      {/* Modal de Conversión (HIDDEN IN PRINT) */}
+      <ConvertToInvoiceModal
+        open={isConvertModalOpen}
+        onClose={() => setIsConvertModalOpen(false)}
+        ticketId={ticketData.id}
+        ticketNumber={ticketData.numberSerie}
+        onSuccess={handleConversionSuccess}
+      />
 
       {/* Global CSS for Print (Scoped to the Receipt Identity) */}
       <style>

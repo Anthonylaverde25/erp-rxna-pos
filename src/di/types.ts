@@ -17,4 +17,7 @@ export const TYPES = {
 
   // Number Series
   INumberSeriesRepository: Symbol.for('INumberSeriesRepository'),
+
+  // Partners (Clientes)
+  IPartnerRepository: Symbol.for('IPartnerRepository'),
 }

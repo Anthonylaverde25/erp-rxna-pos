@@ -71,6 +71,7 @@ export function CartItem({ item, onUpdateQuantity, onUpdateDiscount }: CartItemP
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Typography
               variant="caption"
+              component="span"
               sx={{ color: textMuted, fontWeight: 700, fontSize: '10px', fontFamily: 'monospace' }}
             >
               {item.sku}
@@ -82,6 +83,7 @@ export function CartItem({ item, onUpdateQuantity, onUpdateDiscount }: CartItemP
             )}
           </Box>
         }
+        secondaryTypographyProps={{ component: 'div' }}
         sx={{ margin: 0 }}
       />
 

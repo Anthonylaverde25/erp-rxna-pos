@@ -4,10 +4,12 @@ import { container } from '@/di/container'
 import { TYPES } from '@/di/types'
 import { usePosSettingsStore } from '@/features/pos-settings/store/usePosSettingsStore'
 import type { ITransactionRepository, CheckoutPayload } from '../domain/repositories/ITransactionRepository'
+import type { PosPartner } from '@/domain/entities/partners/PartnerEntity'
 
 // ─── useCart Hook (POS Edition) ──────────────────────────────────────────────
 export function useCart(initialItems: CartItem[] = []) {
   const [cart, setCart] = useState<CartItem[]>(initialItems.map(i => ({ ...i, discountPercent: i.discountPercent || 0 })))
+  const [selectedPartner, setSelectedPartner] = useState<PosPartner | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
 
   const addToCart = useCallback((item: Omit<CartItem, 'quantity' | 'discountPercent'>) => {
@@ -34,7 +36,14 @@ export function useCart(initialItems: CartItem[] = []) {
     )
   }, [])
 
-  const clearCart = useCallback(() => setCart([]), [])
+  const setPartner = useCallback((partner: PosPartner | null) => {
+    setSelectedPartner(partner)
+  }, [])
+
+  const clearCart = useCallback(() => {
+    setCart([])
+    setSelectedPartner(null)
+  }, [])
 
   // Cálculos dinámicos con descuento
   const subtotal = useMemo(() => 
@@ -65,7 +74,8 @@ export function useCart(initialItems: CartItem[] = []) {
         payment_method_id: paymentMethodId,
         notes: 'Venta desde Terminal POS',
         number_series_id: activeSeries?.databaseId,
-        document_type_code: activeSeries?.documentTypeCode || 'TKT'
+        document_type_code: activeSeries?.documentTypeCode || 'TKT',
+        partner_id: selectedPartner?.id
       }
 
       const result = await repository.checkout(payload)
@@ -77,8 +87,7 @@ export function useCart(initialItems: CartItem[] = []) {
     } finally {
       setIsProcessing(false)
     }
-  }, [cart, clearCart])
-
+  }, [cart, clearCart, selectedPartner])
   return {
     cart,
     addToCart,
@@ -90,5 +99,7 @@ export function useCart(initialItems: CartItem[] = []) {
     subtotal,
     tax,
     total,
+    selectedPartner,
+    setPartner
   }
 }
