@@ -16,13 +16,14 @@ interface PosTicketReceiptProps {
   ticketData: PosDocumentEntity;
   paymentInfo: PaymentInfo;
   onClose: () => void;
+  hideActions?: boolean;
 }
 
 /**
  * PosTicketReceipt (Modular Edition)
  * Simulates an 80mm thermal receipt with industrial/Fiori aesthetics.
  */
-export function PosTicketReceipt({ ticketData, paymentInfo, onClose }: PosTicketReceiptProps) {
+export function PosTicketReceipt({ ticketData, paymentInfo, onClose, hideActions = false }: PosTicketReceiptProps) {
   const { isDark } = useTheme();
   const user = useAuthStore((state) => state.user);
   const [isConvertModalOpen, setIsConvertModalOpen] = useState(false);
@@ -58,13 +59,15 @@ export function PosTicketReceipt({ ticketData, paymentInfo, onClose }: PosTicket
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, alignItems: 'center', p: 2 }}>
 
       {/* Action Buttons (UI Only) */}
-      <ReceiptActions
-        onPrint={handlePrint}
-        onNewSale={onClose}
-        onConvertToInvoice={handleConvertToInvoice}
-        sapBlue={sapBlue}
-        textPrimary={textPrimary}
-      />
+      {!hideActions && (
+        <ReceiptActions
+          onPrint={handlePrint}
+          onNewSale={onClose}
+          onConvertToInvoice={handleConvertToInvoice}
+          sapBlue={sapBlue}
+          textPrimary={textPrimary}
+        />
+      )}
 
       {/* Printable Receipt Area */}
       <Paper elevation={3} className="printable-ticket" sx={receiptStyles.paper}>

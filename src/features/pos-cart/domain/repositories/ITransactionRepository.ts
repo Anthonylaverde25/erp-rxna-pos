@@ -3,6 +3,7 @@ import type { PosDocumentEntity } from '@/domain/entities/documents/PosDocumentE
 export interface ITransactionRepository {
   checkout(data: CheckoutPayload): Promise<PosDocumentEntity>;
   convert(documentId: number, partnerId: number, seriesId: number): Promise<PosDocumentEntity>;
+  getById(id: number): Promise<PosDocumentEntity>;
 }
 
 export interface CheckoutPayload {

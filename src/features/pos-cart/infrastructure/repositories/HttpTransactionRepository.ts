@@ -25,4 +25,9 @@ export class HttpTransactionRepository implements ITransactionRepository {
     });
     return DocumentMapper.toDomain(response.data.data);
   }
+
+  async getById(id: number): Promise<PosDocumentEntity> {
+    const response = await this.httpClient.get(`/documents/${id}`);
+    return DocumentMapper.toDomain(response.data.data);
+  }
 }

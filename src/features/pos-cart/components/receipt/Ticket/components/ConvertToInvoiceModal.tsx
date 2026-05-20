@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Dialog, 
   DialogTitle, 
@@ -13,7 +14,7 @@ import {
   Divider,
   Alert
 } from '@mui/material';
-import { FileText, User, Hash, AlertTriangle } from 'lucide-react';
+import { FileText, User, Hash, AlertTriangle, UserPlus } from 'lucide-react';
 import { usePartners } from '@/features/pos-cart/hooks/usePartners';
 import { useNumberSeries } from '@/features/pos-settings/hooks/useNumberSeries';
 import type { PosPartner } from '@/domain/entities/partners/PartnerEntity';
@@ -30,6 +31,7 @@ interface ConvertToInvoiceModalProps {
 }
 
 export function ConvertToInvoiceModal({ open, onClose, ticketId, ticketNumber, onSuccess }: ConvertToInvoiceModalProps) {
+  const navigate = useNavigate();
   const transactionRepository = container.get<ITransactionRepository>(TYPES.ITransactionRepository);
   
   // Partners Logic
@@ -138,6 +140,52 @@ export function ConvertToInvoiceModal({ open, onClose, ticketId, ticketNumber, o
                 />
               )}
             />
+
+            {/* New Partner CTA Insinuation */}
+            {!partnersLoading && !selectedPartner && partnerInputValue.length >= 2 && partners.length === 0 && (
+              <Box 
+                sx={{ 
+                  mt: 1, 
+                  p: 2, 
+                  bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(0, 84, 131, 0.15)' : 'rgba(0, 84, 131, 0.04)',
+                  borderLeft: `4px solid ${sapBlue}`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 2,
+                  animation: 'fadeIn 0.3s ease-out',
+                  '@keyframes fadeIn': {
+                    from: { opacity: 0, transform: 'translateY(-10px)' },
+                    to: { opacity: 1, transform: 'translateY(0)' }
+                  }
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                  <UserPlus size={20} style={{ color: sapBlue }} />
+                  <Box>
+                    <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary', lineHeight: 1.2 }}>
+                      ¿No encuentras al cliente?
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+                      Puedes registrar uno nuevo para este ticket.
+                    </Typography>
+                  </Box>
+                </Box>
+                <Button 
+                  size="small" 
+                  variant="text" 
+                  onClick={() => navigate(`/partners/register-and-convert/${ticketId}`)}
+                  sx={{ 
+                    fontWeight: 800, 
+                    color: sapBlue, 
+                    textTransform: 'none',
+                    '&:hover': { bgcolor: 'rgba(0, 84, 131, 0.08)' } 
+                  }}
+                >
+                  Registrar Nuevo
+                </Button>
+              </Box>
+            )}
           </Box>
 
           <Divider />

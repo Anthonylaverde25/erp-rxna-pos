@@ -1,11 +1,11 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { container } from '@/di/container';
 import { TYPES } from '@/di/types';
 import type { IPartnerRepository } from '../domain/repositories/IPartnerRepository';
 import { PosPartner } from '@/domain/entities/partners/PartnerEntity';
 
 export function usePartners() {
-  const repository = container.get<IPartnerRepository>(TYPES.IPartnerRepository);
+  const repository = useMemo(() => container.get<IPartnerRepository>(TYPES.IPartnerRepository), []);
   const [partners, setPartners] = useState<PosPartner[]>([]);
   const [loading, setLoading] = useState(false);
 

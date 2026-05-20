@@ -6,6 +6,7 @@ import { PosBootstrap } from '@/features/pos-auth/PosBootstrap'
 import { LoginView } from '@/features/pos-auth/views/LoginView'
 import { PosSalesView } from '@/features/pos-shell/views/PosSalesView'
 import { PosSettingsView } from '@/features/pos-settings/views/PosSettingsView'
+import { PartnerRegisterAndConvertView } from '@/features/pos-cart/views/PartnerRegisterAndConvertView'
 
 // ─── App ──────────────────────────────────────────────────────────────────────
 // Entry point — only providers + root layout.
@@ -30,6 +31,7 @@ export default function App() {
             >
               <Route index element={<PosSalesView />} />
               <Route path="setting" element={<PosSettingsView />} />
+              <Route path="partners/register-and-convert/:ticketId" element={<PartnerRegisterAndConvertView />} />
             </Route>
           </Routes>
         </BrowserRouter>
