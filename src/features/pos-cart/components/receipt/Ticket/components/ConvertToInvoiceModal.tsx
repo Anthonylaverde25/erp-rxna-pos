@@ -57,6 +57,13 @@ export function ConvertToInvoiceModal({ open, onClose, ticketId, ticketNumber, o
     return () => clearTimeout(timer);
   }, [partnerInputValue, searchPartners, selectedPartner]);
 
+  // Auto-select first available series
+  useEffect(() => {
+    if (series.length > 0 && selectedSeriesId === '') {
+      setSelectedSeriesId(series[0].id);
+    }
+  }, [series, selectedSeriesId]);
+
   const handleConvert = async () => {
     if (!selectedPartner || selectedSeriesId === '') return;
 
@@ -116,7 +123,7 @@ export function ConvertToInvoiceModal({ open, onClose, ticketId, ticketNumber, o
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  placeholder="Buscar por nombre o NIF..."
+                  placeholder="Buscar por nombre o NIF…"
                   variant="filled"
                   fullWidth
                   InputProps={{
@@ -211,7 +218,7 @@ export function ConvertToInvoiceModal({ open, onClose, ticketId, ticketNumber, o
                   }}
                   sx={{ '& .MuiFilledInput-root': { borderRadius: '4px 4px 0 0' } }}
                 >
-                  <option value="">Seleccione una serie...</option>
+                  <option value="">Seleccione una serie…</option>
                   {series.map((s) => (
                     <option key={s.id} value={s.id}>
                       {s.serie} ({s.documentType?.name || 'Factura'})
@@ -247,7 +254,7 @@ export function ConvertToInvoiceModal({ open, onClose, ticketId, ticketNumber, o
           }}
           startIcon={processing ? <CircularProgress size={20} color="inherit" /> : null}
         >
-          {processing ? 'Procesando...' : 'Generar Factura'}
+          {processing ? 'Procesando…' : 'Generar Factura'}
         </Button>
       </DialogActions>
     </Dialog>

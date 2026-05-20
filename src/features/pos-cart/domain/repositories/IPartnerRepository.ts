@@ -12,4 +12,15 @@ export interface IPartnerRepository {
    * Obtiene un partner por su ID.
    */
   getById(id: number): Promise<PosPartner | null>;
+
+  /**
+   * Crea un nuevo socio comercial (cliente).
+   */
+  create(data: {
+    name: string;
+    vatNumber?: string;
+    email?: string;
+    phone?: string;
+    address?: string;
+  }): Promise<PosPartner>;
 }

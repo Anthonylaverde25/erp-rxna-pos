@@ -1,11 +1,11 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { container } from '@/di/container';
 import { TYPES } from '@/di/types';
 import type { ITransactionRepository } from '../domain/repositories/ITransactionRepository';
 import type { PosDocumentEntity } from '@/domain/entities/documents/PosDocumentEntity';
 
 export function useTransaction() {
-  const repository = container.get<ITransactionRepository>(TYPES.ITransactionRepository);
+  const repository = useMemo(() => container.get<ITransactionRepository>(TYPES.ITransactionRepository), []);
   const [loading, setLoading] = useState(false);
   const [document, setDocument] = useState<PosDocumentEntity | null>(null);
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -10,13 +10,18 @@ import {
   CircularProgress,
   IconButton,
   Divider,
-  alpha
+  alpha,
+  Alert
 } from '@mui/material';
 import { ArrowLeft, UserPlus, FileText, ChevronRight, Save } from 'lucide-react';
 import { useTransaction } from '../hooks/useTransaction';
 import { useNumberSeries } from '@/features/pos-settings/hooks/useNumberSeries';
 import { PosTicketReceipt } from '../components/receipt/PosTicketReceipt';
 import { useTheme } from '@/providers/ThemeProvider';
+import { container } from '@/di/container';
+import { TYPES } from '@/di/types';
+import type { IPartnerRepository } from '@/features/pos-cart/domain/repositories/IPartnerRepository';
+import type { ITransactionRepository } from '@/features/pos-cart/domain/repositories/ITransactionRepository';
 
 export function PartnerRegisterAndConvertView() {
   const { ticketId } = useParams<{ ticketId: string }>();
@@ -24,6 +29,9 @@ export function PartnerRegisterAndConvertView() {
   const { isDark } = useTheme();
   const { document, loading, getTransactionById } = useTransaction();
   const { data: series = [], isLoading: seriesLoading } = useNumberSeries('INV');
+
+  const partnerRepository = useMemo(() => container.get<IPartnerRepository>(TYPES.IPartnerRepository), []);
+  const transactionRepository = useMemo(() => container.get<ITransactionRepository>(TYPES.ITransactionRepository), []);
 
   // Form State
   const [partnerData, setPartnerData] = useState({
@@ -34,12 +42,61 @@ export function PartnerRegisterAndConvertView() {
     address: '',
   });
   const [selectedSeriesId, setSelectedSeriesId] = useState<number | ''>('');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (ticketId) {
       getTransactionById(Number(ticketId));
     }
   }, [ticketId, getTransactionById]);
+
+  // Auto-select first available series
+  useEffect(() => {
+    if (series.length > 0 && selectedSeriesId === '') {
+      setSelectedSeriesId(series[0].id);
+    }
+  }, [series, selectedSeriesId]);
+
+  const handleSaveAndConvert = async () => {
+    if (!partnerData.name.trim()) {
+      setError('El nombre o razón social es obligatorio.');
+      return;
+    }
+    if (selectedSeriesId === '') {
+      setError('Debe seleccionar una serie de facturación.');
+      return;
+    }
+    if (!ticketId) return;
+
+    setSubmitting(true);
+    setError(null);
+    try {
+      // 1. Crear el partner en el servidor
+      const newPartner = await partnerRepository.create({
+        name: partnerData.name,
+        vatNumber: partnerData.vat_number || undefined,
+        email: partnerData.email || undefined,
+        phone: partnerData.phone || undefined,
+        address: partnerData.address || undefined,
+      });
+
+      // 2. Convertir el ticket usando el nuevo partner ID
+      const newInvoice = await transactionRepository.convert(
+        Number(ticketId),
+        newPartner.id,
+        selectedSeriesId as number
+      );
+
+      console.log('Conversión exitosa:', newInvoice);
+      navigate(-1);
+    } catch (err: any) {
+      console.error('Error al guardar y convertir:', err);
+      setError(err.response?.data?.message || 'Error al registrar el cliente o convertir el ticket.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   // SAP Fiori Horizon styles
   const sapBlue = '#005483';
@@ -66,7 +123,7 @@ export function PartnerRegisterAndConvertView() {
         bgcolor: sectionBg,
         zIndex: 10
       }}>
-        <IconButton onClick={() => navigate(-1)} size="small">
+        <IconButton onClick={() => navigate(-1)} size="small" disabled={submitting}>
           <ArrowLeft size={20} />
         </IconButton>
         <Typography variant="h6" sx={{ fontWeight: 800, color: sapBlue }}>
@@ -75,7 +132,9 @@ export function PartnerRegisterAndConvertView() {
         <Box sx={{ flex: 1 }} />
         <Button
           variant="contained"
-          startIcon={<Save size={18} />}
+          onClick={handleSaveAndConvert}
+          disabled={submitting || loading || !partnerData.name.trim() || selectedSeriesId === ''}
+          startIcon={submitting ? <CircularProgress size={18} color="inherit" /> : <Save size={18} />}
           sx={{
             bgcolor: sapBlue,
             fontWeight: 700,
@@ -83,7 +142,7 @@ export function PartnerRegisterAndConvertView() {
             '&:hover': { bgcolor: alpha(sapBlue, 0.9) }
           }}
         >
-          Guardar y Generar Factura
+          {submitting ? 'Guardando…' : 'Guardar y Generar Factura'}
         </Button>
       </Box>
 
@@ -91,7 +150,13 @@ export function PartnerRegisterAndConvertView() {
       <Box sx={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
 
         {/* Left Column: Form (40% width) */}
-        <Box >
+        <Box sx={{
+          width: { xs: '100%', md: '40%' },
+          borderRight: `1px solid ${borderColor}`,
+          overflowY: 'auto',
+          p: 4,
+          bgcolor: sectionBg
+        }}>
           <Box sx={{ maxWidth: 500, mx: 'auto' }}>
             <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 1.5 }}>
               <UserPlus size={24} color={sapBlue} />
@@ -106,9 +171,10 @@ export function PartnerRegisterAndConvertView() {
                   label="Nombre o Razón Social"
                   variant="filled"
                   value={partnerData.name}
-                  onChange={(e) => setPartnerData({ ...partnerData, name: e.target.value })}
+                  onChange={(e) => setPartnerData(prev => ({ ...prev, name: e.target.value }))}
                   placeholder="Ej: Anthony Laverde"
                   required
+                  disabled={submitting}
                   sx={{ '& .MuiFilledInput-root': { borderRadius: '4px' } }}
                 />
               </Box>
@@ -118,8 +184,9 @@ export function PartnerRegisterAndConvertView() {
                   label="NIF / CIF"
                   variant="filled"
                   value={partnerData.vat_number}
-                  onChange={(e) => setPartnerData({ ...partnerData, vat_number: e.target.value })}
+                  onChange={(e) => setPartnerData(prev => ({ ...prev, vat_number: e.target.value }))}
                   placeholder="Ej: 12345678Z"
+                  disabled={submitting}
                   sx={{ '& .MuiFilledInput-root': { borderRadius: '4px' } }}
                 />
               </Box>
@@ -129,8 +196,9 @@ export function PartnerRegisterAndConvertView() {
                   label="Teléfono"
                   variant="filled"
                   value={partnerData.phone}
-                  onChange={(e) => setPartnerData({ ...partnerData, phone: e.target.value })}
+                  onChange={(e) => setPartnerData(prev => ({ ...prev, phone: e.target.value }))}
                   placeholder="Ej: 600000000"
+                  disabled={submitting}
                   sx={{ '& .MuiFilledInput-root': { borderRadius: '4px' } }}
                 />
               </Box>
@@ -140,8 +208,9 @@ export function PartnerRegisterAndConvertView() {
                   label="Correo Electrónico"
                   variant="filled"
                   value={partnerData.email}
-                  onChange={(e) => setPartnerData({ ...partnerData, email: e.target.value })}
+                  onChange={(e) => setPartnerData(prev => ({ ...prev, email: e.target.value }))}
                   placeholder="ejemplo@correo.com"
+                  disabled={submitting}
                   sx={{ '& .MuiFilledInput-root': { borderRadius: '4px' } }}
                 />
               </Box>
@@ -153,8 +222,9 @@ export function PartnerRegisterAndConvertView() {
                   multiline
                   rows={2}
                   value={partnerData.address}
-                  onChange={(e) => setPartnerData({ ...partnerData, address: e.target.value })}
+                  onChange={(e) => setPartnerData(prev => ({ ...prev, address: e.target.value }))}
                   placeholder="C/ Mayor 1, 28001 Madrid"
+                  disabled={submitting}
                   sx={{ '& .MuiFilledInput-root': { borderRadius: '4px' } }}
                 />
               </Box>
@@ -175,18 +245,27 @@ export function PartnerRegisterAndConvertView() {
               value={selectedSeriesId}
               onChange={(e) => setSelectedSeriesId(Number(e.target.value))}
               helperText="Seleccione la serie para la nueva factura"
+              disabled={submitting}
               sx={{ '& .MuiFilledInput-root': { borderRadius: '4px' } }}
             >
               {seriesLoading ? (
-                <MenuItem disabled>Cargando series...</MenuItem>
+                <MenuItem disabled>Cargando series…</MenuItem>
               ) : (
                 series.map((s) => (
                   <MenuItem key={s.id} value={s.id}>
-                    {s.name} ({s.code}) - Prox: {s.nextNumber}
+                    {s.serie} ({s.documentType?.name || 'Factura'}) - Prox: {s.currentNumber + 1}
                   </MenuItem>
                 ))
               )}
             </TextField>
+
+            {error && (
+              <Box sx={{ mt: 3 }}>
+                <Alert severity="error" sx={{ borderRadius: '4px' }}>
+                  {error}
+                </Alert>
+              </Box>
+            )}
 
             <Box sx={{ mt: 6, p: 2, bgcolor: alpha(sapBlue, 0.05), borderLeft: `4px solid ${sapBlue}`, borderRadius: '0 4px 4px 0' }}>
               <Typography variant="caption" sx={{ color: sapBlue, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1 }}>

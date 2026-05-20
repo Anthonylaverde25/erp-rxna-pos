@@ -26,4 +26,39 @@ export class HttpPartnerRepository implements IPartnerRepository {
     const rawData = response.data.partner;
     return rawData ? PartnerMapper.toDomain(rawData) : null;
   }
+
+  async create(data: {
+    name: string;
+    vatNumber?: string;
+    email?: string;
+    phone?: string;
+    address?: string;
+  }): Promise<PosPartner> {
+    const response = await this.httpClient.post('/partners', {
+      name: data.name,
+      vat_number: data.vatNumber,
+      role: 'client',
+      roles: ['client'],
+      type: 'person',
+      contact: (data.email || data.phone) ? [
+        {
+          email: data.email || null,
+          phone: data.phone || null,
+          default: true
+        }
+      ] : [],
+      address: data.address ? [
+        {
+          street: data.address,
+          default: true
+        }
+      ] : []
+    });
+
+    const rawData = response.data.partner;
+    if (!rawData) {
+      throw new Error('Error al registrar el socio comercial en el servidor.');
+    }
+    return PartnerMapper.toDomain(rawData);
+  }
 }
